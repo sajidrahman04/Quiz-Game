@@ -1,0 +1,7 @@
+.component-answer-box{
+    display:inline-block;
+    color: black;
+    padding: 3px;
+    border: 2px solid black;
+    width: 32%;
+}
