@@ -19,8 +19,8 @@ export default class AnswerTable extends React.Component {
       var index = i*numCols;
       answerBoxes.push(<AnswerRow 
         numCols={numCols} 
-        foundItems={this.props.foundItems.slice(index, Math.max(index+numCols, numItems))}
-        answers={this.props.answers.slice(index, Math.max(index+numCols, numItems))}>          
+        foundItems={this.props.foundItems.slice(index, Math.min(index+numCols, numItems))}
+        answers={this.props.answers.slice(index, Math.min(index+numCols, numItems))}>          
         </AnswerRow>)
     }
     return (

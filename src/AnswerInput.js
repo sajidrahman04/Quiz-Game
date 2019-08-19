@@ -11,13 +11,14 @@ export default class AnswerInput extends React.Component {
   }
 
   handleTermChange(event){
-      this.props.checkTerm(event.target.value);
+      var foundAnswer = this.props.checkTerm(event.target.value);
+      this.state.term = foundAnswer ? "" : event.target.value;
   }
 
   render() {
     return (
     <div className="component-search-input">
-        <input onChange={this.handleTermChange}/>
+        <input onChange={this.handleTermChange} value={this.state.term}/>
     </div>
       
     );

@@ -13,21 +13,24 @@ class App extends React.Component {
       allAnswers: ["Pikachu", "Bulbasaur", "Squirtle"],
       foundItems: [false, false, false],
       numItems: 3,
-      numCols: 3
+      numCols: 2
     }
     this.checkTerm = this.checkTerm.bind(this);
   }
 
   checkTerm(term){
-    for (var i = 0; i < 3; i++) {
+    var foundAnswer = false;
+    for (var i = 0; i < this.state.numItems; i++) {
       var newAnswers = this.state.foundItems;
-      if(term == this.state.allAnswers[i]){
+      if(term.toLowerCase() === this.state.allAnswers[i].toLowerCase()){
         newAnswers[i] = true;
+        foundAnswer = true;
       }
     }
     this.setState({
       foundItems: newAnswers
     });
+    return foundAnswer;
   }
 
   render(){
