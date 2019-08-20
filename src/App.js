@@ -1,8 +1,8 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import AnswerTable from './AnswerTable';
 import AnswerInput from './AnswerInput';
+import ScoreBoard from './ScoreBoard';
 
 class App extends React.Component {
 
@@ -10,10 +10,11 @@ class App extends React.Component {
     super(props);
     this.state = {
       answerText: "",
-      allAnswers: ["Pikachu", "Bulbasaur", "Squirtle"],
-      foundItems: [false, false, false],
-      numItems: 3,
-      numCols: 2
+      allAnswers: ["Pikachu", "Bulbasaur", "Squirtle", "Charmander"],
+      foundItems: [false, false, false, false],
+      numItems: 4,
+      numCols: 2,
+      currScore: 0
     }
     this.checkTerm = this.checkTerm.bind(this);
   }
@@ -22,9 +23,12 @@ class App extends React.Component {
     var foundAnswer = false;
     for (var i = 0; i < this.state.numItems; i++) {
       var newAnswers = this.state.foundItems;
-      if(term.toLowerCase() === this.state.allAnswers[i].toLowerCase()){
+      if(this.state.foundItems[i] === false && term.toLowerCase() === this.state.allAnswers[i].toLowerCase()){
         newAnswers[i] = true;
         foundAnswer = true;
+        this.setState({
+          currScore: this.state.currScore+1
+        });
       }
     }
     this.setState({
@@ -40,8 +44,8 @@ class App extends React.Component {
           foundItems = {this.state.foundItems} answers = {this.state.allAnswers}
           numCols = {this.state.numCols}>
         </AnswerTable>
-
         <AnswerInput checkTerm = {this.checkTerm}></AnswerInput>
+        <ScoreBoard currScore={this.state.currScore} total={this.state.numItems}></ScoreBoard>
       </div>
     );
   }
