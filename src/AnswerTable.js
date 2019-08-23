@@ -18,9 +18,8 @@ export default class AnswerTable extends React.Component {
     for (var i = 0; i < numRows; i++) {
       var index = i*numCols;
       answerBoxes.push(<AnswerRow 
-        numCols={numCols} 
-        foundItems={this.props.foundItems.slice(index, Math.min(index+numCols, numItems))}
-        answers={this.props.answers.slice(index, Math.min(index+numCols, numItems))}>          
+        numCols={numCols}
+        answerList={this.props.answerList.slice(index, Math.min(index+numCols, numItems))}>          
         </AnswerRow>)
     }
     return (
@@ -32,7 +31,7 @@ export default class AnswerTable extends React.Component {
 function AnswerRow(props) {
   var row = [];
   for(var i = 0; i < props.numCols; i++){
-    row.push(<AnswerBox found={props.foundItems[i]} answer={props.answers[i]}></AnswerBox>)
+    row.push(<AnswerBox found={props.answerList[i].found} answer={props.answerList[i].text}></AnswerBox>)
   }
   return (
     <div className="component-answer-row">
