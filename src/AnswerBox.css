@@ -1,8 +1,15 @@
 .component-answer-box{
     display:inline-block;
-    color: black;
     padding: 3px;
     border: 2px solid black;
     width: 32%;
     height:20px;
+}
+
+.not-found{
+    color: red
+}
+
+.found{
+    color: black
 }

@@ -20,9 +20,9 @@ export default class AnswerInput extends React.Component {
   render() {
     return (
     <div className="component-search-input">
-        <input onChange={this.handleTermChange} value={this.state.term}/>
+        <input onChange={this.handleTermChange} 
+        value={this.state.term} disabled={this.props.gameStart ? "" : "disabled"}/>
     </div>
-      
     );
   }
 }

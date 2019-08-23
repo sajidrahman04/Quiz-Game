@@ -31,7 +31,7 @@ export default class AnswerTable extends React.Component {
 function AnswerRow(props) {
   var row = [];
   for(var i = 0; i < props.numCols; i++){
-    row.push(<AnswerBox found={props.answerList[i].found} answer={props.answerList[i].text}></AnswerBox>)
+    row.push(<AnswerBox answer={props.answerList[i]}></AnswerBox>)
   }
   return (
     <div className="component-answer-row">

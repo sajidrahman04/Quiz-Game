@@ -23,6 +23,7 @@ class QuizForm extends React.Component {
     }
     this.checkTerm = this.checkTerm.bind(this);
     this.gameStart = this.gameStart.bind(this);
+    this.fillEmptyAnswers = this.fillEmptyAnswers.bind(this);
   }
 
   checkTerm(term){
@@ -42,6 +43,7 @@ class QuizForm extends React.Component {
     if(foundAnswer){
         var newAnswerList = this.state.answerList;
         newAnswerList[foundIndex].found = true;
+        newAnswerList[foundIndex].reveal = true;
         this.setState({
             answerList: newAnswerList
         })
@@ -54,29 +56,47 @@ class QuizForm extends React.Component {
     return foundAnswer;
   }
 
+  fillEmptyAnswers(){
+      var newAnswerList = this.state.answerList;
+      newAnswerList.forEach((answer) => {
+        if(answer.found === false){
+            answer.reveal = true;
+        }
+      })
+      this.setState({
+          answerList: newAnswerList,
+          currScore: this.state.numItems,
+          gameStart: false,
+      })
+  }
+
   gameStart(){
+    var newAnswerList = this.state.answerList;
+    newAnswerList.forEach((answer) => {
+        answer.found = false;
+        answer.reveal = false;
+    })
+
     this.setState({
-      foundItems: [false, false, false, false],
       currScore: 0,
-      gameStart: true
+      gameStart: true,
+      answerList: newAnswerList
     })
   }
 
   render(){
     return (
       <div className="App">
-        
-        {this.state.gameStart ? 
+        <button onClick={this.gameStart}>START GAME</button>
           <div>
           <AnswerTable numItems = {this.state.numItems} 
             answerList = {this.state.answerList}
             numCols = {this.state.numCols}>
           </AnswerTable>
-          <AnswerInput checkTerm = {this.checkTerm}></AnswerInput>
+          <AnswerInput checkTerm = {this.checkTerm} gameStart={this.state.gameStart}></AnswerInput>
           <ScoreBoard currScore={this.state.currScore} total={this.state.numItems}></ScoreBoard>
+          <button onClick={this.fillEmptyAnswers}>GIVE UP</button>
         </div>
-        :<button onClick={this.gameStart}>START GAME</button>}
-        
         
       </div>
     );
