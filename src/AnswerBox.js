@@ -11,7 +11,7 @@ export default class AnswerBox extends React.Component {
   render() {
     return (
       <div className={this.props.answer.found ? "component-answer-box found": "component-answer-box not-found"}>
-        {this.props.answer.reveal ? this.props.answer.text : ""}
+        {this.props.answer.reveal ? this.props.answer.text : "???"}
       </div>
     );
   }

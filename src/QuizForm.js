@@ -17,7 +17,7 @@ class QuizForm extends React.Component {
           {text: "Charmander", reveal: false, found: false}
         ],
       numItems: 4,
-      numCols: 2,
+      numCols: 1,
       currScore: 0,
       gameStart: false
     }
@@ -65,7 +65,6 @@ class QuizForm extends React.Component {
       })
       this.setState({
           answerList: newAnswerList,
-          currScore: this.state.numItems,
           gameStart: false,
       })
   }
