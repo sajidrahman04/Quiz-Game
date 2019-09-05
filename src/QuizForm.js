@@ -3,6 +3,7 @@ import './App.css';
 import AnswerTable from './AnswerTable';
 import AnswerInput from './AnswerInput';
 import ScoreBoard from './ScoreBoard';
+import Timer from './Timer';
 
 class QuizForm extends React.Component {
 
@@ -19,10 +20,13 @@ class QuizForm extends React.Component {
       numItems: 4,
       numCols: 1,
       currScore: 0,
-      gameStart: false
+      gameStart: false,
+      timer: {isOn: false, currTime: 10, maxTime: 10},
+      maxTime: 10
     }
     this.checkTerm = this.checkTerm.bind(this);
     this.gameStart = this.gameStart.bind(this);
+    this.tickTime = this.tickTime.bind(this);
     this.fillEmptyAnswers = this.fillEmptyAnswers.bind(this);
   }
 
@@ -63,11 +67,16 @@ class QuizForm extends React.Component {
             answer.reveal = true;
         }
       })
+      
       this.setState({
           answerList: newAnswerList,
           gameStart: false,
+          timer: {isOn: false, currTime: this.maxTime , maxTime: 60}
       })
+      clearInterval(this.timer);
   }
+
+  
 
   gameStart(){
     var newAnswerList = this.state.answerList;
@@ -81,6 +90,20 @@ class QuizForm extends React.Component {
       gameStart: true,
       answerList: newAnswerList
     })
+    this.tickTime()
+  }
+
+  tickTime(){
+    this.state.timer.maxTime = Date.now() - this.state.timer.maxTime;
+    this.timer = setInterval(() => { 
+        var newTimer = {isOn: true, currTime: this.state.maxTime - Math.ceil((Date.now() - this.state.timer.maxTime)/1000), maxTime: this.state.timer.maxTime}
+        this.setState({
+            timer: newTimer
+        })
+        if(this.state.timer.currTime == 0){
+          this.fillEmptyAnswers();
+        }
+    }, 1);
   }
 
   render(){
@@ -88,6 +111,7 @@ class QuizForm extends React.Component {
       <div className="App">
         <button onClick={this.gameStart}>START GAME</button>
           <div>
+          <Timer currTime = {this.state.timer.currTime}></Timer>
           <AnswerTable numItems = {this.state.numItems} 
             answerList = {this.state.answerList}
             numCols = {this.state.numCols}>
