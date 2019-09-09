@@ -141,12 +141,12 @@ class QuizForm extends React.Component {
           <div>
           <Timer currTime = {this.state.timer.currTime}></Timer>
           <AnswerInput checkTerm = {this.checkTerm} gameStart={this.state.gameStart}></AnswerInput>
+          <ScoreBoard currScore={this.state.currScore} total={this.state.numItems}></ScoreBoard>
+          <button onClick={this.fillEmptyAnswers}>GIVE UP</button>
           <AnswerTable numItems = {this.state.numItems} 
             answerList = {this.state.answerList}
             numCols = {this.state.numCols}>
           </AnswerTable>
-          <ScoreBoard currScore={this.state.currScore} total={this.state.numItems}></ScoreBoard>
-          <button onClick={this.fillEmptyAnswers}>GIVE UP</button>
         </div>
         
       </div>

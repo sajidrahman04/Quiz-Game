@@ -13,7 +13,7 @@ export default class AnswerInput extends React.Component {
   handleTermChange(event){
       var foundAnswer = this.props.checkTerm(event.target.value);
       this.setState({
-        term:foundAnswer ? "" : event.target.value
+        term:foundAnswer ? "" : event.target.value.trim()
       })
   }
 
