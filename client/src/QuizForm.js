@@ -11,24 +11,51 @@ class QuizForm extends React.Component {
     super(props);
     this.state = {
       answerText: "",
-      answerList: [
-          {text: "Pikachu", reveal: false, found: false},
-          {text: "Bulbasaur", reveal: false, found: false},
-          {text: "Squirtle", reveal: false, found: false},
-          {text: "Charmander", reveal: false, found: false}
-        ],
-      numItems: 4,
-      numCols: 1,
+      numItems: 0,
+      numCols: 809,
       currScore: 0,
       gameStart: false,
-      timer: {isOn: false, currTime: 10, maxTime: 10},
-      maxTime: 10
+      answerList: [],
+      timer: {isOn: false, currTime: 100, maxTime: 100},
+      maxTime: 100
     }
     this.checkTerm = this.checkTerm.bind(this);
     this.gameStart = this.gameStart.bind(this);
     this.tickTime = this.tickTime.bind(this);
     this.fillEmptyAnswers = this.fillEmptyAnswers.bind(this);
   }
+
+  // componentDidMount() {
+  //   fetch('/api/getAllPokemon')
+  //     .then((res) => {
+  //       var pokemonList = JSON.parse(res.body);
+  //       this.setState({ 
+  //         answerList: pokemonList.map(name => ({text: name, reveal: false, found: false})),
+  //         numItems: pokemonList.length
+  //        })
+  //     })
+  //     .catch(err => console.log(err));
+  // }
+
+  componentDidMount() {
+    this.callApi()
+      .then((res) => {
+        this.setState({ 
+          answerList: res.map(name => ({text: name, reveal: false, found: false})),
+          numItems: res.length
+        })
+      })
+      .catch(err => console.log(err));
+  }
+  
+  callApi = async () => {
+    const response = await fetch('/api/getAllPokemon');
+    const body = await response.json();
+    if (response.status !== 200) throw Error(body.message);
+    
+    return body;
+  };
+  
 
   checkTerm(term){
     var foundAnswer = false;
@@ -94,6 +121,7 @@ class QuizForm extends React.Component {
   }
 
   tickTime(){
+    // change this with this.setState
     this.state.timer.maxTime = Date.now() - this.state.timer.maxTime;
     this.timer = setInterval(() => { 
         var newTimer = {isOn: true, currTime: this.state.maxTime - Math.ceil((Date.now() - this.state.timer.maxTime)/1000), maxTime: this.state.timer.maxTime}
@@ -112,11 +140,11 @@ class QuizForm extends React.Component {
         <button onClick={this.gameStart}>START GAME</button>
           <div>
           <Timer currTime = {this.state.timer.currTime}></Timer>
+          <AnswerInput checkTerm = {this.checkTerm} gameStart={this.state.gameStart}></AnswerInput>
           <AnswerTable numItems = {this.state.numItems} 
             answerList = {this.state.answerList}
             numCols = {this.state.numCols}>
           </AnswerTable>
-          <AnswerInput checkTerm = {this.checkTerm} gameStart={this.state.gameStart}></AnswerInput>
           <ScoreBoard currScore={this.state.currScore} total={this.state.numItems}></ScoreBoard>
           <button onClick={this.fillEmptyAnswers}>GIVE UP</button>
         </div>
