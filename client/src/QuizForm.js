@@ -12,12 +12,13 @@ class QuizForm extends React.Component {
     this.state = {
       answerText: "",
       numItems: 0,
-      numCols: 809,
+      numCols: 0,
       currScore: 0,
       gameStart: false,
       answerList: [],
       timer: {isOn: false, currTime: 100, maxTime: 100},
-      maxTime: 100
+      maxTime: 100,
+      regions: ['sinnoh', 'johto']
     }
     this.checkTerm = this.checkTerm.bind(this);
     this.gameStart = this.gameStart.bind(this);
@@ -42,14 +43,23 @@ class QuizForm extends React.Component {
       .then((res) => {
         this.setState({ 
           answerList: res.map(name => ({text: name, reveal: false, found: false})),
-          numItems: res.length
+          numItems: res.length,
+          numCols:  res.length
         })
       })
       .catch(err => console.log(err));
   }
   
   callApi = async () => {
-    const response = await fetch('/api/getAllPokemon');
+    var urlQuery;
+    if(this.state.regions.length == 0){
+      urlQuery = "";
+    }
+    else{
+      urlQuery = "?" + this.state.regions.map(r => "regions[]="+r).join("&");
+    }
+    console.log(urlQuery);
+    const response = await fetch(`/api/pokemons${urlQuery}`);
     const body = await response.json();
     if (response.status !== 200) throw Error(body.message);
     
