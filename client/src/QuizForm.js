@@ -14,8 +14,11 @@ class QuizForm extends React.Component {
       numItems: 0,
       numCols: 0,
       currScore: 0,
+      maxScore: 0,
       gameStart: false,
       answerList: [],
+      selectedRegion: 'sinnoh',
+      selectedPokemons: [],
       timer: {isOn: false, currTime: 100, maxTime: 100},
       maxTime: 100,
       regions: ['sinnoh', 'johto']
@@ -24,69 +27,92 @@ class QuizForm extends React.Component {
     this.gameStart = this.gameStart.bind(this);
     this.tickTime = this.tickTime.bind(this);
     this.fillEmptyAnswers = this.fillEmptyAnswers.bind(this);
+    this.changePokemonShown = this.changePokemonShown.bind(this);
   }
 
-  // componentDidMount() {
-  //   fetch('/api/getAllPokemon')
-  //     .then((res) => {
-  //       var pokemonList = JSON.parse(res.body);
-  //       this.setState({ 
-  //         answerList: pokemonList.map(name => ({text: name, reveal: false, found: false})),
-  //         numItems: pokemonList.length
-  //        })
-  //     })
-  //     .catch(err => console.log(err));
-  // }
-
   componentDidMount() {
+    this.selectRegions();
+  }
+
+  selectRegions(){
     this.callApi()
       .then((res) => {
-        this.setState({ 
-          answerList: res.map(name => ({text: name, reveal: false, found: false})),
-          numItems: res.length,
-          numCols:  res.length
+        var totalPokemon = 0;
+        res.forEach(po =>{
+          totalPokemon += po.pokemons.length;
+          this.setState({ 
+            answerList: this.state.answerList.concat({region: po.region, pokemons: po.pokemons.map(name => ({text: name, reveal: false, found: false}))})
+          })
         })
+        this.setState({
+          maxScore: totalPokemon
+        })
+        this.changePokemonShown();
       })
       .catch(err => console.log(err));
   }
   
   callApi = async () => {
     var urlQuery;
-    if(this.state.regions.length == 0){
+    if(this.state.regions.length === 0){
       urlQuery = "";
     }
     else{
       urlQuery = "?" + this.state.regions.map(r => "regions[]="+r).join("&");
     }
-    console.log(urlQuery);
     const response = await fetch(`/api/pokemons${urlQuery}`);
     const body = await response.json();
     if (response.status !== 200) throw Error(body.message);
-    
     return body;
   };
+
+  getSelectedPokemon(changedRegion, newAnswerList){
+    const pokemonsfromRegion = newAnswerList.find((elem) => {return elem.region == changedRegion});
+    if(pokemonsfromRegion == undefined){
+      return [];
+    }
+    return pokemonsfromRegion.pokemons;
+  }
+
+  changePokemonShown(){
+    var selectedRegionPokemon = this.getSelectedPokemon(this.state.selectedRegion, this.state.answerList);
+    this.setState({
+      selectedPokemons: selectedRegionPokemon,
+      numItems: selectedRegionPokemon.length,
+      numCols: selectedRegionPokemon.length
+    })
+  }
   
 
   checkTerm(term){
     var foundAnswer = false;
     var newScore = this.state.currScore;
     var foundIndex = -1;
-    for (var i = 0; i < this.state.numItems; i++) {
-      if(this.state.answerList[i].found === false && term.toLowerCase() === this.state.answerList[i].text.toLowerCase()){
-        foundAnswer = true;
-        newScore += 1;
-        this.setState({
-          currScore: newScore
-        });
-        foundIndex = i;
+    var changedRegion;
+    this.state.answerList.forEach((regionPokemon) => {
+      for (var i = 0; i < regionPokemon.pokemons.length; i++) {
+        if(regionPokemon.pokemons[i].found === false && term.toLowerCase() === regionPokemon.pokemons[i].text.toLowerCase()){
+          foundAnswer = true;
+          newScore += 1;
+          this.setState({
+            currScore: newScore
+          });
+          foundIndex = i;
+          changedRegion = regionPokemon.region;
+        }
       }
-    }
+    })
+    
     if(foundAnswer){
-        var newAnswerList = this.state.answerList;
-        newAnswerList[foundIndex].found = true;
-        newAnswerList[foundIndex].reveal = true;
+        var newPokemonList = this.getSelectedPokemon(changedRegion, this.state.answerList);
+        newPokemonList[foundIndex].found = true;
+        newPokemonList[foundIndex].reveal = true;
+        var newAnswerList = this.state.answerList.map((elem) =>
+            (elem.region == changedRegion) ? {region: elem.region, pokemons: newPokemonList} : elem
+        )
         this.setState({
-            answerList: newAnswerList
+            answerList: newAnswerList,
+            selectedPokemons: this.getSelectedPokemon(this.state.selectedRegion, newAnswerList)
         })
     }
     if(newScore === this.state.numItems){
@@ -98,17 +124,16 @@ class QuizForm extends React.Component {
   }
 
   fillEmptyAnswers(){
-      var newAnswerList = this.state.answerList;
-      newAnswerList.forEach((answer) => {
-        if(answer.found === false){
-            answer.reveal = true;
-        }
-      })
-      
+
+      var newAnswerList = this.state.answerList.map((elem) =>
+      ({region: elem.region, 
+        pokemons: elem.pokemons.map(p => ({text: p.text, found: p.found, reveal: true}))
+      }));
       this.setState({
           answerList: newAnswerList,
           gameStart: false,
-          timer: {isOn: false, currTime: this.maxTime , maxTime: 60}
+          timer: {isOn: false, currTime: this.maxTime , maxTime: 60},
+          selectedPokemons: this.getSelectedPokemon(this.state.selectedRegion, newAnswerList)
       })
       clearInterval(this.timer);
   }
@@ -116,16 +141,16 @@ class QuizForm extends React.Component {
   
 
   gameStart(){
-    var newAnswerList = this.state.answerList;
-    newAnswerList.forEach((answer) => {
-        answer.found = false;
-        answer.reveal = false;
-    })
+    var newAnswerList = this.state.answerList.map((elem) =>
+    ({region: elem.region, 
+      pokemons: elem.pokemons.map(p => ({text: p.text, found: false, reveal: false}))
+    }));
 
     this.setState({
       currScore: 0,
       gameStart: true,
-      answerList: newAnswerList
+      answerList: newAnswerList,
+      selectedPokemons: this.getSelectedPokemon(this.state.selectedRegion, newAnswerList)
     })
     this.tickTime()
   }
@@ -151,10 +176,10 @@ class QuizForm extends React.Component {
           <div>
           <Timer currTime = {this.state.timer.currTime}></Timer>
           <AnswerInput checkTerm = {this.checkTerm} gameStart={this.state.gameStart}></AnswerInput>
-          <ScoreBoard currScore={this.state.currScore} total={this.state.numItems}></ScoreBoard>
+          <ScoreBoard currScore={this.state.currScore} total={this.state.maxScore}></ScoreBoard>
           <button onClick={this.fillEmptyAnswers}>GIVE UP</button>
           <AnswerTable numItems = {this.state.numItems} 
-            answerList = {this.state.answerList}
+            answerList = {this.state.selectedPokemons}
             numCols = {this.state.numCols}>
           </AnswerTable>
         </div>
