@@ -47,7 +47,7 @@ class QuizForm extends React.Component {
         this.setState({
           maxScore: totalPokemon
         })
-        this.changePokemonShown();
+        this.changePokemonShown(this.state.selectedRegion);
       })
       .catch(err => console.log(err));
   }
@@ -74,8 +74,8 @@ class QuizForm extends React.Component {
     return pokemonsfromRegion.pokemons;
   }
 
-  changePokemonShown(){
-    var selectedRegionPokemon = this.getSelectedPokemon(this.state.selectedRegion, this.state.answerList);
+  changePokemonShown(region){
+    var selectedRegionPokemon = this.getSelectedPokemon(region, this.state.answerList);
     this.setState({
       selectedPokemons: selectedRegionPokemon,
       numItems: selectedRegionPokemon.length,
@@ -112,8 +112,8 @@ class QuizForm extends React.Component {
         )
         this.setState({
             answerList: newAnswerList,
-            selectedPokemons: this.getSelectedPokemon(this.state.selectedRegion, newAnswerList)
         })
+        this.changePokemonShown(changedRegion);
     }
     if(newScore === this.state.numItems){
       this.setState({
@@ -137,8 +137,6 @@ class QuizForm extends React.Component {
       })
       clearInterval(this.timer);
   }
-
-  
 
   gameStart(){
     var newAnswerList = this.state.answerList.map((elem) =>
@@ -177,7 +175,14 @@ class QuizForm extends React.Component {
           <Timer currTime = {this.state.timer.currTime}></Timer>
           <AnswerInput checkTerm = {this.checkTerm} gameStart={this.state.gameStart}></AnswerInput>
           <ScoreBoard currScore={this.state.currScore} total={this.state.maxScore}></ScoreBoard>
-          <button onClick={this.fillEmptyAnswers}>GIVE UP</button>
+          <button onClick={this.fillEmptyAnswers}>GIVE UP</button> <br></br>
+          <button onClick={() => this.changePokemonShown('kanto')}>kanto</button>
+          <button onClick={() => this.changePokemonShown('johto')}>johto</button>
+          <button onClick={() => this.changePokemonShown('hoenn')}>hoenn</button>
+          <button onClick={() => this.changePokemonShown('sinnoh')}>sinnoh</button>
+          <button onClick={() => this.changePokemonShown('unova')}>unova</button>
+          <button onClick={() => this.changePokemonShown('kalos')}>kalos</button>
+          <button onClick={() => this.changePokemonShown('alola')}>alola</button>
           <AnswerTable numItems = {this.state.numItems} 
             answerList = {this.state.selectedPokemons}
             numCols = {this.state.numCols}>
