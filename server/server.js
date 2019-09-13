@@ -15,7 +15,7 @@ function getPokemonByRegion(regions){
     const pokemonList = pokemon.all();
     var pokemonsByRegion = []
     if(regions.includes('kanto')){
-        pokemonsByRegion.push({region: 'kanto', pokemons: pokemonList.slice(0,150)});
+        pokemonsByRegion.push({region: 'kanto', pokemons: pokemonList.slice(0,151)});
     }
     if(regions.includes('johto')){
         pokemonsByRegion.push({region: 'johto', pokemons: pokemonList.slice(151, 251)});

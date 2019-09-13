@@ -4,13 +4,14 @@ import AnswerTable from './AnswerTable';
 import AnswerInput from './AnswerInput';
 import ScoreBoard from './ScoreBoard';
 import Timer from './Timer';
+import RegionTab from './RegionTab';
+import SelectRegion from './SelectRegion';
 
 class QuizForm extends React.Component {
 
   constructor(props){
     super(props);
     this.state = {
-      answerText: "",
       numItems: 0,
       numCols: 0,
       currScore: 0,
@@ -28,6 +29,7 @@ class QuizForm extends React.Component {
     this.tickTime = this.tickTime.bind(this);
     this.fillEmptyAnswers = this.fillEmptyAnswers.bind(this);
     this.changePokemonShown = this.changePokemonShown.bind(this);
+    this.toggleRegion = this.toggleRegion.bind(this);
   }
 
   componentDidMount() {
@@ -45,7 +47,8 @@ class QuizForm extends React.Component {
           })
         })
         this.setState({
-          maxScore: totalPokemon
+          maxScore: totalPokemon,
+          selectedRegion: res[0].region
         })
         this.changePokemonShown(this.state.selectedRegion);
       })
@@ -82,6 +85,20 @@ class QuizForm extends React.Component {
       numCols: selectedRegionPokemon.length
     })
   }
+
+  toggleRegion(region){
+    var index = this.state.regions.indexOf(region);
+    var newRegionList;
+    if(index > -1){
+      newRegionList = this.state.regions.splice(index, 1);
+    }
+    else{
+      newRegionList = this.state.regions.push(region);
+    }
+    this.setState({
+      region: newRegionList
+    })
+  }
   
 
   checkTerm(term){
@@ -93,9 +110,8 @@ class QuizForm extends React.Component {
       for (var i = 0; i < regionPokemon.pokemons.length; i++) {
         if(regionPokemon.pokemons[i].found === false && term.toLowerCase() === regionPokemon.pokemons[i].text.toLowerCase()){
           foundAnswer = true;
-          newScore += 1;
           this.setState({
-            currScore: newScore
+            currScore: this.state.currScore + 1
           });
           foundIndex = i;
           changedRegion = regionPokemon.region;
@@ -139,6 +155,7 @@ class QuizForm extends React.Component {
   }
 
   gameStart(){
+    this.selectRegions();
     var newAnswerList = this.state.answerList.map((elem) =>
     ({region: elem.region, 
       pokemons: elem.pokemons.map(p => ({text: p.text, found: false, reveal: false}))
@@ -148,7 +165,8 @@ class QuizForm extends React.Component {
       currScore: 0,
       gameStart: true,
       answerList: newAnswerList,
-      selectedPokemons: this.getSelectedPokemon(this.state.selectedRegion, newAnswerList)
+      selectedPokemons: this.getSelectedPokemon(this.state.selectedRegion, newAnswerList),
+      
     })
     this.tickTime()
   }
@@ -170,23 +188,24 @@ class QuizForm extends React.Component {
   render(){
     return (
       <div className="App">
-        <button onClick={this.gameStart}>START GAME</button>
+        <h1>POKEMON QUIZ</h1>
+        {!this.state.gameStart && (
+        <div>
+          <h2>Choose a region</h2> 
+          <SelectRegion toggleRegion={this.toggleRegion}></SelectRegion>
+          <button onClick={this.gameStart}>START GAME</button>
+        </div>)}
           <div>
-          <Timer currTime = {this.state.timer.currTime}></Timer>
-          <AnswerInput checkTerm = {this.checkTerm} gameStart={this.state.gameStart}></AnswerInput>
-          <ScoreBoard currScore={this.state.currScore} total={this.state.maxScore}></ScoreBoard>
+          
           <button onClick={this.fillEmptyAnswers}>GIVE UP</button> <br></br>
-          <button onClick={() => this.changePokemonShown('kanto')}>kanto</button>
-          <button onClick={() => this.changePokemonShown('johto')}>johto</button>
-          <button onClick={() => this.changePokemonShown('hoenn')}>hoenn</button>
-          <button onClick={() => this.changePokemonShown('sinnoh')}>sinnoh</button>
-          <button onClick={() => this.changePokemonShown('unova')}>unova</button>
-          <button onClick={() => this.changePokemonShown('kalos')}>kalos</button>
-          <button onClick={() => this.changePokemonShown('alola')}>alola</button>
+          <Timer currTime = {this.state.timer.currTime}></Timer>
+          <RegionTab changePokemonShown = {this.changePokemonShown} selectRegions = {this.state.regions}></RegionTab>
           <AnswerTable numItems = {this.state.numItems} 
             answerList = {this.state.selectedPokemons}
             numCols = {this.state.numCols}>
           </AnswerTable>
+          <AnswerInput checkTerm = {this.checkTerm} gameStart={this.state.gameStart}></AnswerInput>
+          <ScoreBoard currScore={this.state.currScore} total={this.state.maxScore}></ScoreBoard>
         </div>
         
       </div>
