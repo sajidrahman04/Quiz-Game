@@ -6,6 +6,9 @@ import ScoreBoard from './ScoreBoard';
 import Timer from './Timer';
 import RegionTab from './RegionTab';
 import SelectRegion from './SelectRegion';
+import io from 'socket.io-client';
+
+
 
 class QuizForm extends React.Component {
 
@@ -22,7 +25,8 @@ class QuizForm extends React.Component {
       selectedPokemons: [],
       timer: {isOn: false, currTime: 100, maxTime: 100},
       maxTime: 100,
-      regions: ['sinnoh', 'johto']
+      regions: ['sinnoh', 'johto'],
+      roomId: ""
     }
     this.checkTerm = this.checkTerm.bind(this);
     this.gameStart = this.gameStart.bind(this);
@@ -34,7 +38,33 @@ class QuizForm extends React.Component {
 
   componentDidMount() {
     this.selectRegions();
+    this.setupRoom();
+
   }
+
+  setupRoom(){
+    this.callSocket()
+      .then((res) => {
+        console.log(res);
+        this.setState({roomId: res});
+      })
+      .catch(err => console.log(err));
+  }
+
+  callSocket = async () => {
+    let socket = io("http://localhost:5000");
+    let params = new URLSearchParams(window.location.search);
+    if(params.get("roomId") != undefined){
+      socket.emit('roomId', params.get("roomId"));
+      return params.get("roomId");
+    }
+    socket.emit('roomId', '');
+    const response = await fetch(`/api/roomId`);
+    const body = await response.json();
+    return body;
+  };
+
+
 
   selectRegions(){
     this.callApi()
@@ -189,9 +219,10 @@ class QuizForm extends React.Component {
     return (
       <div className="App">
         <h1>POKEMON QUIZ</h1>
+        <h2>room is {this.state.roomId}</h2>
         {!this.state.gameStart && (
         <div>
-          <h2>Choose a region</h2> 
+          <h2>Choose the region(s) you want to play on</h2> 
           <SelectRegion toggleRegion={this.toggleRegion}></SelectRegion>
           <button onClick={this.gameStart}>START GAME</button>
         </div>)}
