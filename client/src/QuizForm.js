@@ -26,7 +26,8 @@ class QuizForm extends React.Component {
       timer: {isOn: false, currTime: 100, maxTime: 100},
       maxTime: 100,
       regions: ['sinnoh', 'johto'],
-      roomId: ""
+      roomId: "",
+      clientSocket: io("http://localhost:5000")
     }
     this.checkTerm = this.checkTerm.bind(this);
     this.gameStart = this.gameStart.bind(this);
@@ -36,10 +37,16 @@ class QuizForm extends React.Component {
     this.toggleRegion = this.toggleRegion.bind(this);
   }
 
-  componentDidMount() {
+  componentWillMount(){
     this.selectRegions();
     this.setupRoom();
+  }
 
+  componentDidMount() {
+    
+    this.state.clientSocket.on('m',(msg) =>{
+      this.checkTerm(msg);
+    })
   }
 
   setupRoom(){
@@ -52,13 +59,12 @@ class QuizForm extends React.Component {
   }
 
   callSocket = async () => {
-    let socket = io("http://localhost:5000");
     let params = new URLSearchParams(window.location.search);
     if(params.get("roomId") != undefined){
-      socket.emit('roomId', params.get("roomId"));
+      this.state.clientSocket.emit('roomId', params.get("roomId"));
       return params.get("roomId");
     }
-    socket.emit('roomId', '');
+    this.state.clientSocket.emit('roomId', '');
     const response = await fetch(`/api/roomId`);
     const body = await response.json();
     return body;
@@ -153,6 +159,8 @@ class QuizForm extends React.Component {
         var newPokemonList = this.getSelectedPokemon(changedRegion, this.state.answerList);
         newPokemonList[foundIndex].found = true;
         newPokemonList[foundIndex].reveal = true;
+        //emit right answer to all other users in room
+        this.state.clientSocket.emit('msg',{roomId: this.state.roomId, pkmn: newPokemonList[foundIndex].text});
         var newAnswerList = this.state.answerList.map((elem) =>
             (elem.region == changedRegion) ? {region: elem.region, pokemons: newPokemonList} : elem
         )
@@ -219,7 +227,7 @@ class QuizForm extends React.Component {
     return (
       <div className="App">
         <h1>POKEMON QUIZ</h1>
-        <h2>room is {this.state.roomId}</h2>
+        <a href={`http://localhost:3000/?roomId=${this.state.roomId}`} target="_blank">invite link</a> 
         {!this.state.gameStart && (
         <div>
           <h2>Choose the region(s) you want to play on</h2> 

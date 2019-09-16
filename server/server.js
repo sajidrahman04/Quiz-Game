@@ -22,6 +22,11 @@ io.on('connection', function(socket){
             roomId = rId;
         }
         socket.join(roomId);
+    });
+    socket.on('msg', (msg) => {
+        console.log(msg.roomId, msg.pkmn);
+        // send answer to all users except the one that sent
+        socket.broadcast.to(msg.roomId).emit('m', msg.pkmn);
     })
 });
 
