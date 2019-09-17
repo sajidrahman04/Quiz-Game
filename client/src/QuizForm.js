@@ -27,7 +27,8 @@ class QuizForm extends React.Component {
       maxTime: 100,
       regions: ['sinnoh', 'johto'],
       roomId: "",
-      clientSocket: io("http://localhost:5000")
+      clientSocket: io("http://localhost:5000"),
+      isLeader: true
     }
     this.checkTerm = this.checkTerm.bind(this);
     this.gameStart = this.gameStart.bind(this);
@@ -38,15 +39,26 @@ class QuizForm extends React.Component {
   }
 
   componentWillMount(){
-    this.selectRegions();
     this.setupRoom();
   }
 
   componentDidMount() {
-    
-    this.state.clientSocket.on('m',(msg) =>{
+    this.selectRegions();
+    this.multiplayerEvents()
+
+  }
+
+  multiplayerEvents(){
+    // listen for corret pokemon answers
+    this.state.clientSocket.on('answer',(msg) =>{
       this.checkTerm(msg);
     })
+    // listen for when leader starts game
+    if(!this.state.isLeader){
+      this.state.clientSocket.on('game-start',(msg) =>{
+        this.gameStart();
+      })
+    }
   }
 
   setupRoom(){
@@ -62,6 +74,7 @@ class QuizForm extends React.Component {
     let params = new URLSearchParams(window.location.search);
     if(params.get("roomId") != undefined){
       this.state.clientSocket.emit('roomId', params.get("roomId"));
+      this.setState({isLeader: false});
       return params.get("roomId");
     }
     this.state.clientSocket.emit('roomId', '');
@@ -160,7 +173,8 @@ class QuizForm extends React.Component {
         newPokemonList[foundIndex].found = true;
         newPokemonList[foundIndex].reveal = true;
         //emit right answer to all other users in room
-        this.state.clientSocket.emit('msg',{roomId: this.state.roomId, pkmn: newPokemonList[foundIndex].text});
+        this.emitEvent('pokemon-answer', newPokemonList[foundIndex].text);
+        //this.state.clientSocket.emit('msg',{roomId: this.state.roomId, pkmn: newPokemonList[foundIndex].text});
         var newAnswerList = this.state.answerList.map((elem) =>
             (elem.region == changedRegion) ? {region: elem.region, pokemons: newPokemonList} : elem
         )
@@ -194,6 +208,9 @@ class QuizForm extends React.Component {
 
   gameStart(){
     this.selectRegions();
+    if(this.state.isLeader){
+      this.emitEvent('start-game', true);
+    }
     var newAnswerList = this.state.answerList.map((elem) =>
     ({region: elem.region, 
       pokemons: elem.pokemons.map(p => ({text: p.text, found: false, reveal: false}))
@@ -207,6 +224,11 @@ class QuizForm extends React.Component {
       
     })
     this.tickTime()
+  }
+
+  emitEvent(event, message){
+    console.log(event);
+    this.state.clientSocket.emit(event,{roomId: this.state.roomId, data: message});
   }
 
   tickTime(){
@@ -232,7 +254,7 @@ class QuizForm extends React.Component {
         <div>
           <h2>Choose the region(s) you want to play on</h2> 
           <SelectRegion toggleRegion={this.toggleRegion}></SelectRegion>
-          <button onClick={this.gameStart}>START GAME</button>
+          {this.state.isLeader && <button onClick={this.gameStart}>START GAME</button>}
         </div>)}
           <div>
           

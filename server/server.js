@@ -17,16 +17,21 @@ io.on('connection', function(socket){
     console.log("user connected");
     // generate new room id on connection so previous one does not persist
     roomId = randomstring.generate();
+    // room Id handler
     socket.on('roomId', (rId) =>{
         if(rId.length != 0){
             roomId = rId;
         }
         socket.join(roomId);
     });
-    socket.on('msg', (msg) => {
-        console.log(msg.roomId, msg.pkmn);
-        // send answer to all users except the one that sent
-        socket.broadcast.to(msg.roomId).emit('m', msg.pkmn);
+
+    // pokemon answer handler
+    socket.on('pokemon-answer', (msg) => {
+        socket.broadcast.to(msg.roomId).emit('answer', msg.data);
+    })
+    // game start handler
+    socket.on('start-game', (msg) => {
+        socket.broadcast.to(msg.roomId).emit('game-start', msg.data);
     })
 });
 
