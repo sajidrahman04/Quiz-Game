@@ -57,10 +57,21 @@ class QuizForm extends React.Component {
       this.updateAnswers(data.region, data.index);
       this.updateScore();
     })
-    // listen for when leader starts game
+    
     if(!this.state.isLeader){
-      this.state.clientSocket.on('game-start',(msg) =>{
+      // listen for when leader starts game
+      this.state.clientSocket.on('game-start',(data) =>{
         this.gameStart();
+      })
+      // get region list for now (later on get other start-setup data)
+      this.state.clientSocket.on('start-setup',(data) =>{
+        this.setState({regions: data.regionList})
+      })
+    }
+    else{
+      // all data of leader
+      this.state.clientSocket.on('give-start-data', (data) =>{
+        this.emitEvent('start-data', {regionList: this.state.regions})
       })
     }
   }
@@ -240,7 +251,6 @@ class QuizForm extends React.Component {
   }
 
   emitEvent(event, message){
-    console.log(event);
     this.state.clientSocket.emit(event,{roomId: this.state.roomId, data: message});
   }
 

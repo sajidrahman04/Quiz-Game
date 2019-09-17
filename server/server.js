@@ -21,8 +21,13 @@ io.on('connection', function(socket){
     socket.on('roomId', (rId) =>{
         if(rId.length != 0){
             roomId = rId;
+            
         }
         socket.join(roomId);
+        if(rId.length != 0){
+            // get data of leader such as which regions they chose, maybe later the user names of people in the room so far etc.
+            io.in(roomId).emit('give-start-data', null);
+        }
     });
 
     // pokemon answer handler
@@ -34,25 +39,11 @@ io.on('connection', function(socket){
     socket.on('start-game', (msg) => {
         socket.broadcast.to(msg.roomId).emit('game-start', msg.data);
     })
+    // start data handler to give start data to other players from leader
+    socket.on('start-data', (msg) =>{
+        socket.broadcast.to(msg.roomId).emit('start-setup', msg.data);
+    })
 });
-
-
-
-// // handle incoming connections from clients
-// io.sockets.on('connection', function(socket) {
-//     // once a client has connected, we expect to get a ping from them saying what room they want to join
-//     socket.on('room', function(room) {
-//         socket.join(room);
-//     });
-// });
-
-// // now, it's easy to send a message to just the clients in a given room
-// room = "abc123";
-// io.sockets.in(room).emit('message', 'what is going on, party people?');
-
-// // this message will NOT go to the client defined above
-// io.sockets.in('foobar').emit('message', 'anyone in this room yet?');
-
 
 
 app.use(bodyParser.json());
