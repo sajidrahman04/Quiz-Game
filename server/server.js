@@ -27,6 +27,7 @@ io.on('connection', function(socket){
 
     // pokemon answer handler
     socket.on('pokemon-answer', (msg) => {
+        console.log(msg);
         socket.broadcast.to(msg.roomId).emit('answer', msg.data);
     })
     // game start handler

@@ -1,5 +1,6 @@
 import React from 'react';
 import './App.css';
+import './QuizForm.css';
 import AnswerTable from './AnswerTable';
 import AnswerInput from './AnswerInput';
 import ScoreBoard from './ScoreBoard';
@@ -21,14 +22,15 @@ class QuizForm extends React.Component {
       maxScore: 0,
       gameStart: false,
       answerList: [],
-      selectedRegion: 'sinnoh',
+      selectedRegion: 'kanto',
       selectedPokemons: [],
       timer: {isOn: false, currTime: 100, maxTime: 100},
       maxTime: 100,
-      regions: ['sinnoh', 'johto'],
+      regions: ['kanto'],
       roomId: "",
       clientSocket: io("http://localhost:5000"),
-      isLeader: true
+      isLeader: true,
+      regionChosen: false
     }
     this.checkTerm = this.checkTerm.bind(this);
     this.gameStart = this.gameStart.bind(this);
@@ -36,6 +38,7 @@ class QuizForm extends React.Component {
     this.fillEmptyAnswers = this.fillEmptyAnswers.bind(this);
     this.changePokemonShown = this.changePokemonShown.bind(this);
     this.toggleRegion = this.toggleRegion.bind(this);
+    this.confirmRegions = this.confirmRegions.bind(this);
   }
 
   componentWillMount(){
@@ -50,8 +53,9 @@ class QuizForm extends React.Component {
 
   multiplayerEvents(){
     // listen for corret pokemon answers
-    this.state.clientSocket.on('answer',(msg) =>{
-      this.checkTerm(msg);
+    this.state.clientSocket.on('answer',(data) =>{
+      this.updateAnswers(data.region, data.index);
+      this.updateScore();
     })
     // listen for when leader starts game
     if(!this.state.isLeader){
@@ -74,7 +78,10 @@ class QuizForm extends React.Component {
     let params = new URLSearchParams(window.location.search);
     if(params.get("roomId") != undefined){
       this.state.clientSocket.emit('roomId', params.get("roomId"));
-      this.setState({isLeader: false});
+      this.setState({
+        isLeader: false,
+        regionChosen: true
+      });
       return params.get("roomId");
     }
     this.state.clientSocket.emit('roomId', '');
@@ -135,6 +142,12 @@ class QuizForm extends React.Component {
     })
   }
 
+  confirmRegions(){
+    this.setState({
+      regionChosen: true
+    })
+  }
+
   toggleRegion(region){
     var index = this.state.regions.indexOf(region);
     var newRegionList;
@@ -144,24 +157,18 @@ class QuizForm extends React.Component {
     else{
       newRegionList = this.state.regions.push(region);
     }
-    this.setState({
-      region: newRegionList
-    })
   }
   
 
+
   checkTerm(term){
     var foundAnswer = false;
-    var newScore = this.state.currScore;
     var foundIndex = -1;
     var changedRegion;
     this.state.answerList.forEach((regionPokemon) => {
       for (var i = 0; i < regionPokemon.pokemons.length; i++) {
         if(regionPokemon.pokemons[i].found === false && term.toLowerCase() === regionPokemon.pokemons[i].text.toLowerCase()){
           foundAnswer = true;
-          this.setState({
-            currScore: this.state.currScore + 1
-          });
           foundIndex = i;
           changedRegion = regionPokemon.region;
         }
@@ -169,30 +176,36 @@ class QuizForm extends React.Component {
     })
     
     if(foundAnswer){
-        var newPokemonList = this.getSelectedPokemon(changedRegion, this.state.answerList);
-        newPokemonList[foundIndex].found = true;
-        newPokemonList[foundIndex].reveal = true;
         //emit right answer to all other users in room
-        this.emitEvent('pokemon-answer', newPokemonList[foundIndex].text);
-        //this.state.clientSocket.emit('msg',{roomId: this.state.roomId, pkmn: newPokemonList[foundIndex].text});
-        var newAnswerList = this.state.answerList.map((elem) =>
-            (elem.region == changedRegion) ? {region: elem.region, pokemons: newPokemonList} : elem
-        )
-        this.setState({
-            answerList: newAnswerList,
-        })
+        this.emitEvent('pokemon-answer', {region: changedRegion, index: foundIndex});
+        this.updateAnswers(changedRegion, foundIndex);
         this.changePokemonShown(changedRegion);
-    }
-    if(newScore === this.state.numItems){
-      this.setState({
-        gameStart: false
-      })
+        this.updateScore();
     }
     return foundAnswer;
   }
 
-  fillEmptyAnswers(){
+  updateAnswers(changedRegion, foundIndex){
+    var newPokemonList = this.getSelectedPokemon(changedRegion, this.state.answerList);
+    newPokemonList[foundIndex].found = true;
+    newPokemonList[foundIndex].reveal = true;
+    
+    var newAnswerList = this.state.answerList.map((elem) =>
+        (elem.region == changedRegion) ? {region: elem.region, pokemons: newPokemonList} : elem
+    )
+    this.setState({
+        answerList: newAnswerList,
+    })
+  }
 
+  updateScore(){
+    this.setState({
+      currScore: this.state.currScore + 1,
+      gameStart: (this.state.currScore + 1 != this.state.numItems)
+    });
+  }
+
+  fillEmptyAnswers(){
       var newAnswerList = this.state.answerList.map((elem) =>
       ({region: elem.region, 
         pokemons: elem.pokemons.map(p => ({text: p.text, found: p.found, reveal: true}))
@@ -249,24 +262,33 @@ class QuizForm extends React.Component {
     return (
       <div className="App">
         <h1>POKEMON QUIZ</h1>
-        <a href={`http://localhost:3000/?roomId=${this.state.roomId}`} target="_blank">invite link</a> 
-        {!this.state.gameStart && (
-        <div>
+
+        <div className={this.state.regionChosen ? 'hidden' : ''}>
           <h2>Choose the region(s) you want to play on</h2> 
           <SelectRegion toggleRegion={this.toggleRegion}></SelectRegion>
-          {this.state.isLeader && <button onClick={this.gameStart}>START GAME</button>}
-        </div>)}
-          <div>
+          <button onClick={this.confirmRegions}> Confirm Region(s)</button>
+        </div>
+        <div>
           
-          <button onClick={this.fillEmptyAnswers}>GIVE UP</button> <br></br>
-          <Timer currTime = {this.state.timer.currTime}></Timer>
-          <RegionTab changePokemonShown = {this.changePokemonShown} selectRegions = {this.state.regions}></RegionTab>
-          <AnswerTable numItems = {this.state.numItems} 
-            answerList = {this.state.selectedPokemons}
-            numCols = {this.state.numCols}>
-          </AnswerTable>
-          <AnswerInput checkTerm = {this.checkTerm} gameStart={this.state.gameStart}></AnswerInput>
-          <ScoreBoard currScore={this.state.currScore} total={this.state.maxScore}></ScoreBoard>
+
+          <div className={!this.state.regionChosen ? 'hidden' : ''}>
+         
+          <div className={(this.state.gameStart && this.state.isLeader)? 'hidden' : ''}>
+             <a href={`http://localhost:3000/?roomId=${this.state.roomId}`} target="_blank">invite link</a> <br></br>
+            <button onClick={this.gameStart}>START GAME</button>
+          </div>
+          <div className={!this.state.gameStart ? 'hidden' : ''}>
+            <button onClick={this.fillEmptyAnswers}>GIVE UP</button>
+          </div>
+            <Timer currTime = {this.state.timer.currTime}></Timer>
+            <RegionTab changePokemonShown = {this.changePokemonShown} selectRegions = {this.state.regions}></RegionTab>
+            <AnswerTable numItems = {this.state.numItems} 
+              answerList = {this.state.selectedPokemons}
+              numCols = {this.state.numCols}>
+            </AnswerTable>
+            <AnswerInput checkTerm = {this.checkTerm} gameStart={this.state.gameStart}></AnswerInput>
+            <ScoreBoard currScore={this.state.currScore} total={this.state.maxScore}></ScoreBoard>
+          </div>
         </div>
         
       </div>
